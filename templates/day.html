@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Daily journal</title>
+  </head>
+  <body>
+    <main>
+      <h1>Daily journal</h1>
+      <form method="post" action="{{ url_for('create_entry') }}">
+        <label for="entry-date">Day</label>
+        <input id="entry-date" name="entry_date" type="date" value="{{ selected_date }}" required>
+
+        <label for="description">Description</label>
+        <input id="description" name="description" type="text" required>
+
+        <fieldset>
+          <legend>Type</legend>
+          <label><input name="entry_type" type="radio" value="task"> Task</label>
+          <label><input name="entry_type" type="radio" value="event"> Event</label>
+          <label><input name="entry_type" type="radio" value="note"> Note</label>
+        </fieldset>
+
+        <button type="submit">Add entry</button>
+      </form>
+
+      {% if error %}
+        <p role="alert">{{ error }}</p>
+      {% endif %}
+
+      <h2>Entries for {{ selected_date }}</h2>
+      <ul>
+        {% for entry in entries %}
+          <li>{{ entry.entry_type }}: {{ entry.description }}</li>
+        {% else %}
+          <li>No entries yet.</li>
+        {% endfor %}
+      </ul>
+    </main>
+  </body>
+</html>

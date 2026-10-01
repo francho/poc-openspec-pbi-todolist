@@ -56,6 +56,39 @@ class FlaskAppTests(unittest.TestCase):
             self.assertEqual(response.status_code, 200)
             self.assertTrue(database_path.exists())
 
+    def test_daily_flow_creates_and_retains_each_supported_type(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            app = create_app({"TESTING": True, "DATABASE_PATH": Path(temp_dir) / "app.sqlite3"})
+            client = app.test_client()
+            for entry_type in ("task", "event", "note"):
+                response = client.post(
+                    "/entries",
+                    data={"description": f"A {entry_type}", "entry_type": entry_type, "entry_date": "2026-10-01"},
+                )
+                self.assertEqual(response.status_code, 302)
+            response = client.get("/day?date=2026-10-01")
+            self.assertEqual(response.status_code, 200)
+            for entry_type in ("task", "event", "note"):
+                self.assertIn(f"A {entry_type}".encode(), response.data)
+
+    def test_daily_flow_shows_validation_feedback(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            app = create_app({"TESTING": True, "DATABASE_PATH": Path(temp_dir) / "app.sqlite3"})
+            client = app.test_client()
+            for data, message in (
+                ({"description": "", "entry_type": "task", "entry_date": "2026-10-01"}, b"description must not be empty"),
+                ({"description": "Missing type", "entry_type": "", "entry_date": "2026-10-01"}, b"entry type must be task, event, or note"),
+            ):
+                response = client.post("/entries", data=data)
+                self.assertEqual(response.status_code, 400)
+                self.assertIn(message, response.data)
+
+    def test_day_view_rejects_non_iso_dates(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            app = create_app({"TESTING": True, "DATABASE_PATH": Path(temp_dir) / "app.sqlite3"})
+            response = app.test_client().get("/day?date=2026-1-1")
+            self.assertEqual(response.status_code, 400)
+
 
 if __name__ == "__main__":
     unittest.main()
