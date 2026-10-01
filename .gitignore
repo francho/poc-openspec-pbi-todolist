@@ -1,3 +1,5 @@
+# Local Flask runtime data
+instance/
 node_modules/
 dist/
 coverage/
