@@ -270,8 +270,8 @@ This README provides the high-level view. Refer to these documents for setup and
 - [Installation, operation, recovery, and limitations](tools/pbi-workflow/docs/operations.md)
 - [Configuration, defaults, validation rules, and labels](tools/pbi-workflow/docs/configuration.md)
 - [Reproducible sandbox lifecycle bundle](tools/pbi-workflow/test/fixtures/sandbox-lifecycle/README.md)
-- [Technical design and architectural decisions](openspec/changes/custom-pbi-workflow/design.md)
-- [Behavioral specification](openspec/changes/custom-pbi-workflow/specs/pbi-driven-workflow/spec.md)
+- [Technical design and architectural decisions](openspec/changes/archive/2026-10-01-custom-pbi-workflow/design.md)
+- [Behavioral specification](openspec/changes/archive/2026-10-01-custom-pbi-workflow/specs/pbi-driven-workflow/spec.md)
 
 ## Current Scope
 
