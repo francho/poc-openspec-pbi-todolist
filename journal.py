@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
+from contextlib import closing
 from pathlib import Path
 import re
 import sqlite3
@@ -59,32 +60,34 @@ class EntryStore:
         return connection
 
     def initialize(self) -> None:
-        with self._connect() as connection:
-            connection.execute(
-                """
-                CREATE TABLE IF NOT EXISTS entries (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    description TEXT NOT NULL,
-                    entry_type TEXT NOT NULL CHECK (entry_type IN ('task', 'event', 'note')),
-                    entry_date TEXT NOT NULL
+        with closing(self._connect()) as connection:
+            with connection:
+                connection.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS entries (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        description TEXT NOT NULL,
+                        entry_type TEXT NOT NULL CHECK (entry_type IN ('task', 'event', 'note')),
+                        entry_date TEXT NOT NULL
+                    )
+                    """
                 )
-                """
-            )
 
     def create_entry(self, description: str, entry_type: str, entry_date: str) -> Entry:
         normalized_description = validate_description(description)
         normalized_type = validate_entry_type(entry_type)
         normalized_date = validate_iso_date(entry_date)
-        with self._connect() as connection:
-            cursor = connection.execute(
-                "INSERT INTO entries (description, entry_type, entry_date) VALUES (?, ?, ?)",
-                (normalized_description, normalized_type, normalized_date),
-            )
-            return Entry(cursor.lastrowid, normalized_description, normalized_type, normalized_date)
+        with closing(self._connect()) as connection:
+            with connection:
+                cursor = connection.execute(
+                    "INSERT INTO entries (description, entry_type, entry_date) VALUES (?, ?, ?)",
+                    (normalized_description, normalized_type, normalized_date),
+                )
+                return Entry(cursor.lastrowid, normalized_description, normalized_type, normalized_date)
 
     def entries_for_date(self, entry_date: str) -> list[Entry]:
         normalized_date = validate_iso_date(entry_date)
-        with self._connect() as connection:
+        with closing(self._connect()) as connection:
             rows = connection.execute(
                 "SELECT id, description, entry_type, entry_date FROM entries WHERE entry_date = ? ORDER BY id",
                 (normalized_date,),
