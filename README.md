@@ -11,6 +11,25 @@ It is not intended to be production-ready. Its purpose is to validate an approac
 - sensitive operations rely on deterministic, tested TypeScript tooling;
 - human approvals and automated evidence are bound to a specific revision or commit SHA.
 
+## Run the Daily Journal
+
+The PBI-1 product slice is a local Flask application backed by SQLite.
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+python app.py
+```
+
+Open `http://127.0.0.1:5000/` to select a day and create a task, event, or note. The default database is created at `instance/journal.sqlite3`.
+
+Run the application tests with:
+
+```bash
+python -m unittest -v test_journal.py
+```
+
 ## POC Goals
 
 The POC evaluates whether a product requirement can move from definition to a final pull request while preserving:
