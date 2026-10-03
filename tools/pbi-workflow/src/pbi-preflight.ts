@@ -33,7 +33,7 @@ function parseSections(body: string): {
   duplicateFields: PbiFieldId[];
 } {
   const cleaned = body.replace(/<!--[\s\S]*?-->/gu, "");
-  const matches = [...cleaned.matchAll(/^##\s+(.+?)\s*$/gmu)];
+  const matches = [...cleaned.matchAll(/^#{2,3}\s+(.+?)\s*$/gmu)];
   const sections: Partial<Record<PbiFieldId, string>> = {};
   const duplicateFields: PbiFieldId[] = [];
   for (const field of requiredPbiFields) {

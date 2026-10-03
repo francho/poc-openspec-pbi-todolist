@@ -3,3 +3,10 @@ instance/
 node_modules/
 dist/
 coverage/
+instance/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/

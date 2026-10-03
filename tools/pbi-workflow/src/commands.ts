@@ -161,7 +161,7 @@ const gitHubIssueSchema = z
     url: z.url(),
     state: z.enum(["OPEN", "CLOSED"]),
     body: z.string(),
-    author: z.object({ login: z.string().min(1) }).strict(),
+    author: z.object({ login: z.string().min(1) }).strip(),
   })
   .strict();
 

@@ -7,22 +7,22 @@ trusted:
 verification:
   install:
     enabled: true
-    command: cd tools/pbi-workflow && npm ci
+    command: python -m pip install -r requirements.txt -r requirements-dev.txt
   format:
     enabled: false
     reason: This repository has no standalone format check
   lint:
     enabled: true
-    command: cd tools/pbi-workflow && npm run lint
+    command: ruff check app.py journal.py test/test_journal.py
   typecheck:
     enabled: true
-    command: cd tools/pbi-workflow && npm run build
+    command: mypy app.py journal.py
   test:
     enabled: true
-    command: cd tools/pbi-workflow && npm test
+    command: python -m unittest discover -s test -p 'test_*.py' -v
   build:
     enabled: true
-    command: cd tools/pbi-workflow && npm run build
+    command: python -m compileall -q app.py journal.py
 demo:
   start:
     enabled: false

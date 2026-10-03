@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import date
-from contextlib import closing
-from pathlib import Path
 import re
 import sqlite3
-
+from contextlib import closing
+from dataclasses import dataclass
+from datetime import date
+from pathlib import Path
 
 SUPPORTED_ENTRY_TYPES = frozenset({"task", "event", "note"})
 ISO_DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
@@ -83,6 +82,8 @@ class EntryStore:
                     "INSERT INTO entries (description, entry_type, entry_date) VALUES (?, ?, ?)",
                     (normalized_description, normalized_type, normalized_date),
                 )
+                if cursor.lastrowid is None:
+                    raise RuntimeError("SQLite did not return the new entry id")
                 return Entry(cursor.lastrowid, normalized_description, normalized_type, normalized_date)
 
     def entries_for_date(self, entry_date: str) -> list[Entry]:

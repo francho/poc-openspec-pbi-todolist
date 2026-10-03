@@ -3,6 +3,7 @@ from __future__ import annotations
 import sqlite3
 import tempfile
 import unittest
+from datetime import date
 from pathlib import Path
 
 from app import create_app
@@ -35,6 +36,11 @@ class EntryStoreTests(unittest.TestCase):
             entry = self.store.create_entry(f"A {entry_type}", entry_type, "2026-10-01")
             self.assertEqual(entry.entry_type, entry_type)
 
+    def test_description_and_type_are_normalized(self) -> None:
+        entry = self.store.create_entry("  Plan the week  ", " TASK ", "2026-10-01")
+        self.assertEqual(entry.description, "Plan the week")
+        self.assertEqual(entry.entry_type, "task")
+
     def test_invalid_values_are_rejected(self) -> None:
         invalid_values = [
             ("", "task", "2026-10-01"),
@@ -48,6 +54,9 @@ class EntryStoreTests(unittest.TestCase):
 
 
 class FlaskAppTests(unittest.TestCase):
+    def create_test_app(self, temp_dir: str):
+        return create_app({"TESTING": True, "DATABASE_PATH": Path(temp_dir) / "app.sqlite3"})
+
     def test_app_starts_with_configured_database(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             database_path = Path(temp_dir) / "app.sqlite3"
@@ -55,6 +64,18 @@ class FlaskAppTests(unittest.TestCase):
             response = app.test_client().get("/health")
             self.assertEqual(response.status_code, 200)
             self.assertTrue(database_path.exists())
+
+    def test_root_redirects_to_day_view(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            response = self.create_test_app(temp_dir).test_client().get("/")
+            self.assertEqual(response.status_code, 302)
+            self.assertEqual(response.headers["Location"], "/day")
+
+    def test_day_view_uses_today_when_date_is_missing(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            response = self.create_test_app(temp_dir).test_client().get("/day")
+            self.assertEqual(response.status_code, 200)
+            self.assertIn(f"Entries for {date.today().isoformat()}".encode(), response.data)
 
     def test_daily_flow_creates_and_retains_each_supported_type(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -73,8 +94,12 @@ class FlaskAppTests(unittest.TestCase):
 
     def test_daily_flow_shows_validation_feedback(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
-            app = create_app({"TESTING": True, "DATABASE_PATH": Path(temp_dir) / "app.sqlite3"})
+            app = self.create_test_app(temp_dir)
             client = app.test_client()
+            client.post(
+                "/entries",
+                data={"description": "Existing entry", "entry_type": "note", "entry_date": "2026-10-01"},
+            )
             for data, message in (
                 ({"description": "", "entry_type": "task", "entry_date": "2026-10-01"}, b"description must not be empty"),
                 ({"description": "Missing type", "entry_type": "", "entry_date": "2026-10-01"}, b"entry type must be task, event, or note"),
@@ -82,12 +107,23 @@ class FlaskAppTests(unittest.TestCase):
                 response = client.post("/entries", data=data)
                 self.assertEqual(response.status_code, 400)
                 self.assertIn(message, response.data)
+                self.assertIn(b"Existing entry", response.data)
 
     def test_day_view_rejects_non_iso_dates(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
-            app = create_app({"TESTING": True, "DATABASE_PATH": Path(temp_dir) / "app.sqlite3"})
-            response = app.test_client().get("/day?date=2026-1-1")
+            response = self.create_test_app(temp_dir).test_client().get("/day?date=2026-02-30")
             self.assertEqual(response.status_code, 400)
+
+    def test_invalid_entry_date_is_rejected_without_creating_entry(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            app = self.create_test_app(temp_dir)
+            client = app.test_client()
+            response = client.post(
+                "/entries",
+                data={"description": "Invalid date", "entry_type": "task", "entry_date": "2026-02-30"},
+            )
+            self.assertEqual(response.status_code, 400)
+            self.assertIn(b"entry date must be a valid calendar date", response.data)
 
 
 if __name__ == "__main__":

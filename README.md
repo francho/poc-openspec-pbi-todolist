@@ -19,6 +19,7 @@ The PBI-1 product slice is a local Flask application backed by SQLite.
 python -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
+python -m pip install -r requirements-dev.txt
 python app.py
 ```
 
@@ -27,7 +28,17 @@ Open `http://127.0.0.1:5000/` to select a day and create a task, event, or note.
 Run the application tests with:
 
 ```bash
-python -m unittest -v test_journal.py
+python -m unittest discover -s test -p 'test_*.py' -v
+```
+
+Run the Python quality checks with:
+
+```bash
+ruff check app.py journal.py test/test_journal.py
+mypy app.py journal.py
+python -m compileall -q app.py journal.py
+pre-commit install
+pre-commit run --all-files
 ```
 
 ## POC Goals

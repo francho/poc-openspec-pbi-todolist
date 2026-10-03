@@ -61,6 +61,26 @@ describe("command adapters", () => {
     ]);
   });
 
+  it("accepts the additional author metadata returned by gh", async () => {
+    const runner = new StubRunner({
+      exitCode: 0,
+      stdout: JSON.stringify({
+        number: 42,
+        title: "Checkout",
+        url: "https://github.com/acme/shop/issues/42",
+        state: "OPEN",
+        body: "As a shopper...",
+        author: { login: "product-owner", id: "123", is_bot: false, name: "Product Owner" },
+      }),
+      stderr: "",
+    });
+    const client = new GitHubClient(runner, "/workspace", "acme/shop");
+
+    await expect(client.getIssue(42)).resolves.toMatchObject({
+      author: { login: "product-owner" },
+    });
+  });
+
   it.each([
     "Authentication failed for token=ghp_12345678901234567890",
     "HTTP 403 Bearer github_pat_12345678901234567890",
