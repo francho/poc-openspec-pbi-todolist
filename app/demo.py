@@ -62,7 +62,7 @@ def _complete_and_reopen_task(page: Any, base_url: str, output_dir: Path) -> lis
 SCENARIOS: dict[str, Scenario] = {
     "create-entry": _create_entry,
     "validation-error": _validation_error,
-    "complete-and-reopen-task": _complete_and_reopen_task,
+    "complete-task": _complete_and_reopen_task,
 }
 
 
