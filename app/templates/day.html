@@ -31,11 +31,53 @@
       <h2>Entries for {{ selected_date }}</h2>
       <ul>
         {% for entry in entries %}
-          <li>{{ entry.entry_type }}: {{ entry.description }}</li>
+          <li class="entry{% if entry.completed %} completed{% endif %}" data-entry-id="{{ entry.id }}">
+            {% if entry.entry_type == "task" %}
+              <label>
+                <input class="completion-checkbox" type="checkbox" aria-label="Complete {{ entry.description }}"
+                       {% if entry.completed %}checked{% endif %}>
+                <span class="entry-description">{{ entry.entry_type }}: {{ entry.description }}</span>
+              </label>
+            {% else %}
+              <span class="entry-description">{{ entry.entry_type }}: {{ entry.description }}</span>
+            {% endif %}
+          </li>
         {% else %}
           <li>No entries yet.</li>
         {% endfor %}
       </ul>
+      <p id="completion-error" role="alert" hidden></p>
     </main>
+    <script>
+      document.querySelectorAll(".completion-checkbox").forEach((checkbox) => {
+        checkbox.addEventListener("change", async (event) => {
+          const input = event.target;
+          const entry = input.closest("[data-entry-id]");
+          const previousState = !input.checked;
+          const error = document.getElementById("completion-error");
+          input.disabled = true;
+          error.hidden = true;
+          try {
+            const response = await fetch(`/entries/${entry.dataset.entryId}/completion`, {
+              method: "POST",
+              headers: {"Content-Type": "application/json"},
+              body: JSON.stringify({completed: input.checked})
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error || "Unable to update task");
+            entry.classList.toggle("completed", result.completed);
+          } catch (updateError) {
+            input.checked = previousState;
+            error.textContent = updateError.message;
+            error.hidden = false;
+          } finally {
+            input.disabled = false;
+          }
+        });
+      });
+    </script>
+    <style>
+      .entry.completed .entry-description { text-decoration: line-through; opacity: 0.65; }
+    </style>
   </body>
 </html>
