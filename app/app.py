@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from flask import Flask, redirect, render_template, request, url_for
+from flask import Flask, jsonify, redirect, render_template, request, url_for
 
 from .journal import EntryStore, EntryValidationError, validate_iso_date
 
@@ -62,6 +62,26 @@ def create_app(test_config: dict[str, object] | None = None) -> Flask:
                 pass
             return render_template("day.html", selected_date=selected_date, entries=entries, error=str(error)), 400
         return redirect(url_for("day_view", date=selected_date))
+
+    @app.post("/entries/<int:entry_id>/completion")
+    def update_completion(entry_id: int):
+        payload = request.get_json(silent=True)
+        if not isinstance(payload, dict) or not isinstance(payload.get("completed"), bool):
+            return jsonify(error="completed must be a boolean"), 400
+        try:
+            entry = app.extensions["entry_store"].set_completion(entry_id, payload["completed"])
+        except EntryValidationError as error:
+            status = 404 if str(error) == "entry not found" else 400
+            return jsonify(error=str(error)), status
+        result = {
+            "id": entry.id,
+            "description": entry.description,
+            "entry_type": entry.entry_type,
+            "entry_date": entry.entry_date,
+            "completed": entry.completed,
+            "completed_at": entry.completed_at,
+        }
+        return jsonify(entry=result, **result)
 
     return app
 
