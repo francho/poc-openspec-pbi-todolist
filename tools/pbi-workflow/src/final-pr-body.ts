@@ -20,6 +20,11 @@ export interface FinalGateSummary {
   readonly evidence: readonly string[];
 }
 
+export interface DemoArtifactEvidence {
+  readonly label: string;
+  readonly path: string;
+}
+
 export interface FinalPullRequestBodyInput {
   readonly existingBody: string;
   readonly pbiNumber: number;
@@ -28,7 +33,7 @@ export interface FinalPullRequestBodyInput {
   readonly slices: readonly DeliveredSliceSummary[];
   readonly verification: readonly VerificationSummary[];
   readonly gates: readonly FinalGateSummary[];
-  readonly demoEvidence: readonly string[];
+  readonly demoEvidence: readonly (string | DemoArtifactEvidence)[];
   readonly mergeRisk: { readonly level: "low" | "medium" | "high"; readonly assessment: string };
 }
 
@@ -69,6 +74,18 @@ function githubReference(value: string, repository: string, kind: "issues" | "ch
   }
 }
 
+function demoArtifactUrl(repository: string, archiveCommitSha: string, evidence: DemoArtifactEvidence): string {
+  const path = evidence.path.trim();
+  if (evidence.label.trim().length === 0) throw new FinalPullRequestBodyError("Demo artifact label is required");
+  if (!path.startsWith("artifacts/")
+    || path.includes("\\")
+    || path.split("/").some((segment) => segment === "" || segment === "." || segment === "..")) {
+    throw new FinalPullRequestBodyError(`Invalid demo artifact path: ${evidence.path}`);
+  }
+  const encodedPath = path.split("/").map(encodeURIComponent).join("/");
+  return `https://github.com/${repository}/blob/${archiveCommitSha}/${encodedPath}`;
+}
+
 export async function renderFinalPullRequestBody(
   input: FinalPullRequestBodyInput,
   resolver: FinalReferenceResolver,
@@ -103,6 +120,9 @@ export async function renderFinalPullRequestBody(
       throw new FinalPullRequestBodyError(`Invalid check reference: ${check.checkUrl}`);
     }
   }
+  for (const evidence of input.demoEvidence) {
+    if (typeof evidence !== "string") demoArtifactUrl(repository, input.archiveCommitSha, evidence);
+  }
 
   await requireResolution("issue", input.pbiUrl, resolver.issueResolves.bind(resolver));
   await requireResolution("commit", input.archiveCommitSha, resolver.commitResolves.bind(resolver));
@@ -129,7 +149,9 @@ export async function renderFinalPullRequestBody(
     ...input.gates.map((gate) => `- ${gate.gate}: **${gate.verdict}** - ${gate.evidence.map(bullet).join("; ")}`),
     "",
     "## Demo Evidence",
-    ...input.demoEvidence.map((evidence) => `- ${bullet(evidence)}`),
+    ...input.demoEvidence.map((evidence) => typeof evidence === "string"
+      ? `- ${bullet(evidence)}`
+      : `- [${bullet(evidence.label)}](${demoArtifactUrl(repository, input.archiveCommitSha, evidence)})`),
     "",
     "## Merge Risk",
     `- **${input.mergeRisk.level}**: ${bullet(input.mergeRisk.assessment)}`,

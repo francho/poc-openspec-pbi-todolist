@@ -13,10 +13,10 @@ verification:
     reason: This repository has no standalone format check
   lint:
     enabled: true
-    command: ruff check app/app.py app/journal.py app/test/test_journal.py
+    command: ruff check app
   typecheck:
     enabled: true
-    command: mypy app/app.py app/journal.py
+    command: mypy app/
   test:
     enabled: true
     command: python -m unittest discover -s app/test -p 'test_*.py' -v
@@ -25,5 +25,10 @@ verification:
     command: python -m compileall -q app
 demo:
   start:
-    enabled: false
-    reason: This repository has no interactive application
+    enabled: true
+    command: JOURNAL_DATABASE=artifacts/demo/runtime.sqlite3 python -m flask --app app run --host 127.0.0.1 --port 5055
+  capture:
+    command: python -m app.demo --base-url http://127.0.0.1:5055 --scenarios-from-change
+    artifactsDirectory: artifacts/demo
+  url: http://127.0.0.1:5055/
+  readinessUrl: http://127.0.0.1:5055/health

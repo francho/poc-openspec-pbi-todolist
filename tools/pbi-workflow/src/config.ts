@@ -18,6 +18,25 @@ const commandConfigSchema = z.discriminatedUnion("enabled", [
     .strict(),
 ]);
 
+const repositoryRelativePathSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .refine(
+    (path) => !path.startsWith("/")
+      && !path.includes("\\")
+      && !/^[A-Za-z]:/u.test(path)
+      && path.split("/").every((segment) => segment !== "" && segment !== "." && segment !== ".."),
+    "Path must be a normalized repository-relative path",
+  );
+
+const demoCaptureSchema = z
+  .object({
+    command: z.string().trim().min(1),
+    artifactsDirectory: repositoryRelativePathSchema,
+  })
+  .strict();
+
 const pbiLabelsSchema = z
   .object({
     refinement: labelNameSchema.default("pbi/refinement"),
@@ -126,6 +145,7 @@ export const workflowConfigSchema = z
     demo: z
       .object({
         start: commandConfigSchema,
+        capture: demoCaptureSchema.optional(),
         url: z.url().optional(),
         readinessUrl: z.url().optional(),
         startupTimeoutSeconds: z.number().int().min(1).max(900).default(60),
@@ -137,6 +157,13 @@ export const workflowConfigSchema = z
             code: "custom",
             path: ["url"],
             message: "Demo URL is required when the start command is enabled",
+          });
+        }
+        if (demo.start.enabled && demo.capture === undefined) {
+          context.addIssue({
+            code: "custom",
+            path: ["capture"],
+            message: "Demo capture configuration is required when the start command is enabled",
           });
         }
       }),

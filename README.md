@@ -38,11 +38,19 @@ Run the Playwright integration tests with:
 python -m unittest discover -s app/test -p 'playwright_test.py' -v
 ```
 
+Capture reproducible evidence for the scenarios declared by the active PBI with:
+
+```bash
+python -m app.demo --scenarios-from-change
+```
+
+Each OpenSpec change must declare its scenarios in `openspec/changes/<change>/demo.json`. The command rejects missing, unknown, duplicate, or ambiguous change manifests, uses a temporary SQLite database unless `--base-url` selects an already running app, and writes a SHA-bound manifest, screenshots, and logs under `artifacts/demo/`.
+
 Run the Python quality checks with:
 
 ```bash
-ruff check app/app.py app/journal.py app/test/test_journal.py
-mypy app/app.py app/journal.py
+ruff check app
+mypy app/
 python -m compileall -q app
 pre-commit install
 pre-commit run --all-files

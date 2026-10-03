@@ -36,6 +36,16 @@ artifacts:
     requires:
       - specs
 
+  - id: demo
+    generates: demo.json
+    description: PBI-specific executable scenarios for reproducible demo evidence
+    template: demo.json
+    instruction: |
+      Declare only the executable demo scenario IDs implemented by this PBI.
+      Keep the list non-empty and do not include scenarios from unrelated PBIs.
+    requires:
+      - specs
+
 apply:
   requires:
     - tasks

@@ -122,7 +122,7 @@ describe("setup discovery", () => {
     expect(preview.labelsToCreate).not.toContain("pbi/refinement");
     expect(preview.labelsToCreate).toContain("agent-in-progress");
     expect(preview.confirmations).toContain(
-      "Provide and confirm the demo URL and optional readiness URL",
+      "Provide and confirm the demo URL, optional readiness URL, capture command, and artifact directory",
     );
   });
 

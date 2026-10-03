@@ -50,7 +50,10 @@ const input: FinalPullRequestBodyInput = {
     { gate: "demo-preparation", verdict: "not-applicable", evidence: ["No interactive entry point"] },
     { gate: "demo-approval", verdict: "pass", evidence: ["Accepted by trusted human"] },
   ],
-  demoEvidence: ["Non-applicable disposition accepted for the current SHA"],
+  demoEvidence: [
+    "Non-applicable disposition accepted for the current SHA",
+    { label: "Demo manifest", path: "artifacts/demo/current/manifest.json" },
+  ],
   mergeRisk: { level: "low", assessment: "Changes are isolated and fully covered by the verification matrix." },
 };
 
@@ -71,6 +74,7 @@ describe("final PBI pull request body", () => {
     expect(body).toContain("## Verification");
     expect(body).toContain("## Completion Gates");
     expect(body).toContain("## Demo Evidence");
+    expect(body).toContain(`[Demo manifest](https://github.com/acme/shop/blob/${archiveCommitSha}/artifacts/demo/current/manifest.json)`);
     expect(body).toContain("## Merge Risk");
     expect(body).not.toContain('{"purpose":"pbi-42"}');
   });
@@ -88,5 +92,12 @@ describe("final PBI pull request body", () => {
       .rejects.toThrow(/Demo evidence/u);
     await expect(renderFinalPullRequestBody({ ...input, mergeRisk: { level: "low", assessment: "" } }, new StubResolver()))
       .rejects.toThrow(/Merge-risk/u);
+  });
+
+  it("rejects demo artifact paths outside the repository evidence directory", async () => {
+    await expect(renderFinalPullRequestBody({
+      ...input,
+      demoEvidence: [{ label: "Unsafe", path: "../secret.txt" }],
+    }, new StubResolver())).rejects.toThrow(/Invalid demo artifact path/u);
   });
 });

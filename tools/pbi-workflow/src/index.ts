@@ -126,6 +126,7 @@ export { ArchiveFinalizationError, completePbiArchive } from "./archive-finaliza
 export type { ArchiveResult, PbiArchiveCompletion, PbiArchiveOperations } from "./archive-finalization.js";
 export { FinalPullRequestBodyError, renderFinalPullRequestBody } from "./final-pr-body.js";
 export type {
+	DemoArtifactEvidence,
 	DeliveredSliceSummary,
 	FinalGateSummary,
 	FinalPullRequestBodyInput,

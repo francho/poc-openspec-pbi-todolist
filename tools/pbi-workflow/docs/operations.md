@@ -59,6 +59,16 @@ Run preview and apply a second time. The second pass must propose no unexpected 
 5. After every task PR merges, documentation, QA, demo preparation, and trusted demo disposition run for the current integration-branch SHA.
 6. Finalization checks the orchestration task, synchronizes durable specs, archives the change, pushes the archive commit, publishes the verified final PR body, and marks the draft PBI PR ready. The final PR is never auto-merged.
 
+## Demo Evidence
+
+For an enabled demo, the demo agent runs the configured startup command, waits for the configured readiness URL, and then runs the exact `demo.capture.command`. The configured command should load the scenarios declared by the active PBI change:
+
+```bash
+python -m app.demo --base-url http://127.0.0.1:5055 --scenarios-from-change
+```
+
+Each change must provide `openspec/changes/<change>/demo.json` with a non-empty `scenarios` list. The command rejects missing, unknown, duplicate, or ambiguous manifests. It writes a SHA-bound manifest, one directory per scenario, screenshots, and logs below `demo.capture.artifactsDirectory`. A ready report must identify both configured commands and list only repository-relative files from that directory. Finalization includes the validated bundle in the archive commit and links each file from the final pull request. Capturing evidence never grants demo approval; the current trusted-human label event remains required.
+
 ## Recovery
 
 Always resume through `/opsx-apply`; do not reconstruct progress from chat history.
@@ -85,5 +95,5 @@ For a failed setup, restore only files changed by that run and remove only label
 - The scheduler supports at most 20 concurrent tasks; the default is three.
 - Task integration is squash-only with task auto-merge enabled. Final auto-merge is unsupported.
 - Spec synchronization is agent-driven and must complete inline before archive.
-- Demo automation uses only configured startup, URL, readiness, and timeout values. Disabled demos require a recorded reason and human disposition.
+- Demo automation uses only configured startup, capture, artifact, URL, readiness, and timeout values. Disabled demos require a recorded reason and human disposition.
 - Setup does not configure branch protection, repository rulesets, required checks, permissions, secrets, or external deployment infrastructure.

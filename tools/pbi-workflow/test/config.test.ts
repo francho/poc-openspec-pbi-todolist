@@ -65,4 +65,14 @@ describe("parseWorkflowConfigYaml", () => {
       ConfigValidationError,
     );
   });
+
+  it("requires a safe capture configuration for enabled demos", async () => {
+    const source = (await fixture("valid")).replace(
+      "  start:\n    enabled: false\n    reason: This package has no interactive application",
+      "  start:\n    enabled: true\n    command: python -m app\n  url: http://127.0.0.1:5000",
+    );
+    expect(() => parseWorkflowConfigYaml(source)).toThrow(/capture/u);
+    expect(() => parseWorkflowConfigYaml(`${source}\n  capture:\n    command: python -m app.demo\n    artifactsDirectory: ../outside\n`))
+      .toThrow(/repository-relative/u);
+  });
 });

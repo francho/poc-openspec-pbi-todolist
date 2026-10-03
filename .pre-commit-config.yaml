@@ -3,12 +3,12 @@ repos:
     hooks:
       - id: ruff
         name: ruff
-        entry: ruff check app/app.py app/journal.py app/test/test_journal.py
+        entry: ruff check app
         language: system
         pass_filenames: false
       - id: mypy
         name: mypy
-        entry: mypy app/app.py app/journal.py
+        entry: mypy app/
         language: system
         pass_filenames: false
       - id: python-tests

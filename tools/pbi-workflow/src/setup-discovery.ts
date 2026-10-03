@@ -128,7 +128,7 @@ export function buildSetupPreview(discovery: SetupDiscovery): SetupPreview {
     "Confirm every detected or disabled verification command",
   ];
   if (discovery.commands.demoStart !== undefined) {
-    confirmations.push("Provide and confirm the demo URL and optional readiness URL");
+    confirmations.push("Provide and confirm the demo URL, optional readiness URL, capture command, and artifact directory");
   }
 
   return {

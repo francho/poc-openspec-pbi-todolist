@@ -23,16 +23,29 @@ describe("demo preparation", () => {
 
   it("requires enabled demos to use configured startup and readiness values", async () => {
     const base = await disabledConfig();
-    const config = { ...base, demo: { start: { enabled: true as const, command: "npm run demo" }, url: "http://localhost:3000", readinessUrl: "http://localhost:3000/ready", startupTimeoutSeconds: 60 } };
+    const config = { ...base, demo: { start: { enabled: true as const, command: "npm run demo" }, capture: { command: "npm run capture", artifactsDirectory: "artifacts/demo" }, url: "http://localhost:3000", readinessUrl: "http://localhost:3000/ready", startupTimeoutSeconds: 60 } };
     expect(validateDemoReport({
       headSha: "b".repeat(40), disposition: "ready", startCommand: "npm run demo",
+      captureCommand: "npm run capture",
       url: "http://localhost:3000", readinessUrl: "http://localhost:3000/ready",
-      readinessObserved: true, evidence: ["Demo screenshot and interaction log"], findings: [],
+      readinessObserved: true, evidence: ["artifacts/demo/screenshot.png"], findings: [],
     }, config).disposition).toBe("ready");
     expect(() => validateDemoReport({
       headSha: "b".repeat(40), disposition: "ready", startCommand: "npm start",
-      url: "http://localhost:3000", readinessObserved: true, evidence: ["evidence"], findings: [],
+      captureCommand: "npm run capture",
+      url: "http://localhost:3000", readinessObserved: true, evidence: ["artifacts/demo/evidence.txt"], findings: [],
     }, config)).toThrow(/configured/u);
+    expect(() => validateDemoReport({
+      headSha: "b".repeat(40), disposition: "ready", startCommand: "npm run demo",
+      captureCommand: "npm run other", url: "http://localhost:3000",
+      readinessObserved: true, evidence: ["artifacts/demo/evidence.txt"], findings: [],
+    }, config)).toThrow(/capture command/u);
+    expect(() => validateDemoReport({
+      headSha: "b".repeat(40), disposition: "ready", startCommand: "npm run demo",
+      captureCommand: "npm run capture", url: "http://localhost:3000",
+      readinessUrl: "http://localhost:3000/ready", readinessObserved: true,
+      evidence: ["artifacts/demo/../../secret.txt"], findings: [],
+    }, config)).toThrow(/artifact directory/u);
   });
 
   it("accepts demo approval only from current trusted human label history", () => {
