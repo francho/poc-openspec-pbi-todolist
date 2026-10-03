@@ -30,6 +30,7 @@ class EntryStoreTests(unittest.TestCase):
 
     def test_initialization_migrates_legacy_database(self) -> None:
         with sqlite3.connect(self.database_path) as connection:
+            connection.execute("DROP TABLE entries")
             connection.execute(
                 "CREATE TABLE entries (id INTEGER PRIMARY KEY, description TEXT NOT NULL, "
                 "entry_type TEXT NOT NULL, entry_date TEXT NOT NULL)"
