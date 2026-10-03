@@ -1,3 +1,4 @@
 mypy>=1.13,<2
+playwright>=1.50,<2
 pre-commit>=4,<5
 ruff>=0.9,<1

@@ -7,7 +7,7 @@ from datetime import date
 from pathlib import Path
 
 from app import create_app
-from journal import EntryStore, EntryValidationError
+from app.journal import EntryStore, EntryValidationError
 
 
 class EntryStoreTests(unittest.TestCase):

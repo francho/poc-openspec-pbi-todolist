@@ -7,6 +7,6 @@ select = ["E4", "E7", "E9", "F", "I"]
 
 [tool.mypy]
 python_version = "3.10"
-files = ["app.py", "journal.py"]
+files = ["app/app.py", "app/journal.py"]
 check_untyped_defs = true
 warn_unused_ignores = true

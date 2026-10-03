@@ -20,7 +20,8 @@ python -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
 python -m pip install -r requirements-dev.txt
-python app.py
+playwright install chromium
+python -m app
 ```
 
 Open `http://127.0.0.1:5000/` to select a day and create a task, event, or note. The default database is created at `instance/journal.sqlite3`.
@@ -28,15 +29,21 @@ Open `http://127.0.0.1:5000/` to select a day and create a task, event, or note.
 Run the application tests with:
 
 ```bash
-python -m unittest discover -s test -p 'test_*.py' -v
+python -m unittest discover -s app/test -p 'test_*.py' -v
+```
+
+Run the Playwright integration tests with:
+
+```bash
+python -m unittest discover -s app/test -p 'playwright_test.py' -v
 ```
 
 Run the Python quality checks with:
 
 ```bash
-ruff check app.py journal.py test/test_journal.py
-mypy app.py journal.py
-python -m compileall -q app.py journal.py
+ruff check app/app.py app/journal.py app/test/test_journal.py
+mypy app/app.py app/journal.py
+python -m compileall -q app
 pre-commit install
 pre-commit run --all-files
 ```

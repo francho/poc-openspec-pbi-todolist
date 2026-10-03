@@ -5,13 +5,16 @@ from pathlib import Path
 
 from flask import Flask, redirect, render_template, request, url_for
 
-from journal import EntryStore, EntryValidationError, validate_iso_date
+from .journal import EntryStore, EntryValidationError, validate_iso_date
 
 
 def create_app(test_config: dict[str, object] | None = None) -> Flask:
     app = Flask(__name__)
     app.config.from_mapping(
-        DATABASE_PATH=os.environ.get("JOURNAL_DATABASE", "instance/journal.sqlite3"),
+        DATABASE_PATH=os.environ.get(
+            "JOURNAL_DATABASE",
+            Path(__file__).resolve().parent.parent / "instance" / "journal.sqlite3",
+        ),
     )
     if test_config is not None:
         app.config.update(test_config)
@@ -64,7 +67,3 @@ def create_app(test_config: dict[str, object] | None = None) -> Flask:
 
 
 app = create_app()
-
-
-if __name__ == "__main__":
-    app.run()

@@ -13,16 +13,16 @@ verification:
     reason: This repository has no standalone format check
   lint:
     enabled: true
-    command: ruff check app.py journal.py test/test_journal.py
+    command: ruff check app/app.py app/journal.py app/test/test_journal.py
   typecheck:
     enabled: true
-    command: mypy app.py journal.py
+    command: mypy app/app.py app/journal.py
   test:
     enabled: true
-    command: python -m unittest discover -s test -p 'test_*.py' -v
+    command: python -m unittest discover -s app/test -p 'test_*.py' -v
   build:
     enabled: true
-    command: python -m compileall -q app.py journal.py
+    command: python -m compileall -q app
 demo:
   start:
     enabled: false
