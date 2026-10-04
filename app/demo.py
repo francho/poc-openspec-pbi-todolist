@@ -44,9 +44,25 @@ def _validation_error(page: Any, base_url: str, output_dir: Path) -> list[str]:
     return [str(screenshot)]
 
 
+def _complete_and_reopen_task(page: Any, base_url: str, output_dir: Path) -> list[str]:
+    page.goto(f"{base_url}/day?date=2026-10-03")
+    page.get_by_label("Description").fill("Review the journal")
+    page.get_by_label("Task").check()
+    page.get_by_role("button", name="Add entry").click()
+    checkbox = page.get_by_label("Complete Review the journal")
+    checkbox.check()
+    page.locator("li.completed").get_by_text("task: Review the journal", exact=True).wait_for()
+    screenshot = output_dir / "task-completed-without-reload.png"
+    page.screenshot(path=screenshot, full_page=True)
+    checkbox.uncheck()
+    page.locator("li:not(.completed)").get_by_text("task: Review the journal", exact=True).wait_for()
+    return [str(screenshot)]
+
+
 SCENARIOS: dict[str, Scenario] = {
     "create-entry": _create_entry,
     "validation-error": _validation_error,
+    "complete-task": _complete_and_reopen_task,
 }
 
 

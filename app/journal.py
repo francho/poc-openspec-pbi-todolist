@@ -4,7 +4,7 @@ import re
 import sqlite3
 from contextlib import closing
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 SUPPORTED_ENTRY_TYPES = frozenset({"task", "event", "note"})
@@ -21,6 +21,11 @@ class Entry:
     description: str
     entry_type: str
     entry_date: str
+    completed_at: str | None = None
+
+    @property
+    def completed(self) -> bool:
+        return self.completed_at is not None
 
 
 def validate_description(description: str) -> str:
@@ -67,10 +72,14 @@ class EntryStore:
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         description TEXT NOT NULL,
                         entry_type TEXT NOT NULL CHECK (entry_type IN ('task', 'event', 'note')),
-                        entry_date TEXT NOT NULL
+                        entry_date TEXT NOT NULL,
+                        completed_at TEXT NULL
                     )
                     """
                 )
+                columns = {row["name"] for row in connection.execute("PRAGMA table_info(entries)")}
+                if "completed_at" not in columns:
+                    connection.execute("ALTER TABLE entries ADD COLUMN completed_at TEXT NULL")
 
     def create_entry(self, description: str, entry_type: str, entry_date: str) -> Entry:
         normalized_description = validate_description(description)
@@ -84,13 +93,37 @@ class EntryStore:
                 )
                 if cursor.lastrowid is None:
                     raise RuntimeError("SQLite did not return the new entry id")
-                return Entry(cursor.lastrowid, normalized_description, normalized_type, normalized_date)
+                return Entry(cursor.lastrowid, normalized_description, normalized_type, normalized_date, None)
 
     def entries_for_date(self, entry_date: str) -> list[Entry]:
         normalized_date = validate_iso_date(entry_date)
         with closing(self._connect()) as connection:
             rows = connection.execute(
-                "SELECT id, description, entry_type, entry_date FROM entries WHERE entry_date = ? ORDER BY id",
+                "SELECT id, description, entry_type, entry_date, completed_at "
+                "FROM entries WHERE entry_date = ? ORDER BY id",
                 (normalized_date,),
             ).fetchall()
-        return [Entry(row["id"], row["description"], row["entry_type"], row["entry_date"]) for row in rows]
+        return [
+            Entry(row["id"], row["description"], row["entry_type"], row["entry_date"], row["completed_at"])
+            for row in rows
+        ]
+
+    def set_completion(self, entry_id: int, completed: bool) -> Entry:
+        if not isinstance(completed, bool):
+            raise EntryValidationError("completed must be a boolean")
+        with closing(self._connect()) as connection:
+            with connection:
+                row = connection.execute(
+                    "SELECT id, description, entry_type, entry_date, completed_at FROM entries WHERE id = ?",
+                    (entry_id,),
+                ).fetchone()
+                if row is None:
+                    raise EntryValidationError("entry not found")
+                if row["entry_type"] != "task":
+                    raise EntryValidationError("only tasks can be completed")
+                completed_at = datetime.now(timezone.utc).isoformat(timespec="seconds") if completed else None
+                connection.execute(
+                    "UPDATE entries SET completed_at = ? WHERE id = ?",
+                    (completed_at, entry_id),
+                )
+        return Entry(row["id"], row["description"], row["entry_type"], row["entry_date"], completed_at)

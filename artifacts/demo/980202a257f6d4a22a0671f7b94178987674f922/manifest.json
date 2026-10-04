@@ -1,0 +1,21 @@
+{
+  "headSha": "980202a257f6d4a22a0671f7b94178987674f922",
+  "capturedAt": "2026-10-04T00:06:05.353792+00:00",
+  "disposition": "ready",
+  "baseUrl": "http://127.0.0.1:5055",
+  "readinessUrl": "http://127.0.0.1:5055/health",
+  "readinessObserved": true,
+  "scenarios": [
+    {
+      "name": "complete-task",
+      "status": "pass",
+      "evidence": [
+        "artifacts/demo/980202a257f6d4a22a0671f7b94178987674f922/complete-task/task-completed-without-reload.png"
+      ]
+    }
+  ],
+  "logs": [
+    "artifacts/demo/980202a257f6d4a22a0671f7b94178987674f922/demo.log"
+  ],
+  "findings": []
+}
